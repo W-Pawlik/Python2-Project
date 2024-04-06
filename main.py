@@ -1,11 +1,44 @@
 import time
 import random
 import os
+from dotenv import load_dotenv, find_dotenv
+import pprint
+from pymongo import MongoClient
+
+load_dotenv(find_dotenv())
+password = os.environ.get("MONGODB_PWD")
+
+connection_string = f"mongodb+srv://wojtekpawlik17:{password}@pharmacyproducts.7r8kbft.mongodb.net/?retryWrites=true&w=majority&appName=PharmacyProducts"
+
+client = MongoClient(connection_string)
+products_db = client.PharmacyProducts
+collections = products_db.list_collection_names()
+print(collections)
+collection = products_db.Products
+
+def insert_product_doc():
+    product_document = {
+        "name": input("Wpisz nazwe leku: "),
+        "price": input("Wpisz cene leku: ")
+    }
+    inserted_id = collection.insert_one(product_document).inserted_id
+    print(inserted_id)
+
+insert_product_doc()
+
+printer = pprint.PrettyPrinter()
+
+def print_products():
+    products = collection.find()
+
+    for product in products:
+        printer.pprint(product)
+
+print_products()
 
 # Napisac logike dla id(generowanie id na podstawie wymyslonego algorytmu albo z biblioteki). Get i set. jezeli id nowego obiektu jest reowne innemu(iteracja przez list), to wygeneruj inne id
 # Dane będą przetrzymywane w plikach tekstowych
 # 3 opcja aplikacji- pomocnik sprzedaży. 1 odczyt danych z pliku tekstowego. 2 użytkownik dodaje produkt wpisując jego nazwe oraz ilość. 3 opcja usunięcia dodanego produktu. 4 Przleiczenie całkowietego kosztu zakupów. Do tegop użyję operatorów. osbługa błędów. 
-# produkty(albo kliencie, jeszcze zobaczę) przechowywane w mongodb lub innej bazie danych
 
 
 class Customer:
@@ -68,6 +101,33 @@ class CustomerServices:
                 case _:
                     print("Nieprawidlowa wartosc")
 
+class ProductsServices:
+    def products_menu(self):
+        while True:
+            print("\n1- Dodaj produkt do bazy danych")
+            print("2- Wyswietl liste produktow")
+            print("3- Edytuj produkt")
+            print("4- Usun produkt z bazy danych")
+            print("5- Wroc do glwonego menu")
+            
+            choice = input("Twoj wybor: ")
+            print("\n")
+
+            match choice:
+                case "1":
+                    print("Dodaj")
+                case "2":
+                    print("Wyswietl")
+                case "3":
+                    print("Edytuj")
+                case "4":
+                    print("Usun")
+                case "5":
+                    print("Laduje")
+                    time.sleep(1)
+                    break
+                case _:
+                    print("Nieprawidlowa wartosc")
 
 class app: 
       
@@ -87,7 +147,9 @@ class app:
                     customer_service = CustomerServices()
                     customer_service.customer_menu()
                 case "2":
-                    print("2")
+                    print("\n-----Obsluga klientow-----")
+                    product_service = ProductsServices()
+                    product_service.products_menu()
                 case "3":
                     print("Do zobaczenia!")
                     break
