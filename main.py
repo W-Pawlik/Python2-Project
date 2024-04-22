@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 import pprint
 from pymongo import MongoClient
+from rich.console import Console
 
 
 
@@ -185,7 +186,6 @@ class ProductServices:
         client = MongoClient(connection_string)
         products_db = client.PharmacyProducts
         collections = products_db.list_collection_names()
-        print(collections)
         self.collection = products_db.Products
 
         self.printer = pprint.PrettyPrinter()
@@ -194,33 +194,38 @@ class ProductServices:
         interface = ProductsInterface(ProductsRepository(self.collection,self.printer))
         interface.products_menu()
 
-class app: 
-      
+class App: 
+    def __init__(self, console):
+        self.console = Console
+
     def start(self):
+        main_theme = "rgb(8,153,147)"
+        section_title = "bold yellow on black"
         while True:
             os.system('cls')
-            print('-------Witaj w aplikacji------')
-            print('\nWybierz co chcesz zrobić:')
-            print('1-Obsluga klientow')
-            print('2-Obsluga produktow')
-            print('3-exit')
+            console.print('-------Witaj w aplikacji------', style="bold black on yellow")
+            console.print('\nWybierz co chcesz zrobić:', style=section_title)
+            console.print('1-Obsluga klientow 🧑', style=main_theme)
+            console.print('2-Obsluga produktow :pill:',style=main_theme )
+            console.print('3-exit',style="red")
 
             choice = input("Twój wybór: ")
             match choice:
                 case "1":
-                    print("\n-----Obsluga klientow-----")
+                    console.print("\n👪👪👪 Obsluga klientow 👪👪👪", style=section_title)
                     customer_service = CustomerServices()
                     customer_service.customer_menu()
                 case "2":
-                    print("\n-----Obsluga produktów-----")
+                    console.print("\n:pill::pill::pill: [bold yellow]Obsluga produktów[/] :pill::pill::pill:")
                     product_service = ProductServices()
                     product_service.products_menu()
                 case "3":
-                    print("Do zobaczenia!")
+                    console.print(":waving_hand: Do zobaczenia! :waving_hand:", style="bold")
                     break
                 case _:
                     print("Nieprawidlowa wartosc")
 
 if __name__ == '__main__':
-    app = app()
+    console = Console()
+    app = App(console)
     app.start()
