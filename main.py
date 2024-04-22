@@ -5,36 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 import pprint
 from pymongo import MongoClient
 
-load_dotenv(find_dotenv())
-password = os.environ.get("MONGODB_PWD")
 
-connection_string = f"mongodb+srv://wojtekpawlik17:{password}@pharmacyproducts.7r8kbft.mongodb.net/?retryWrites=true&w=majority&appName=PharmacyProducts"
-
-client = MongoClient(connection_string)
-products_db = client.PharmacyProducts
-collections = products_db.list_collection_names()
-print(collections)
-collection = products_db.Products
-
-def insert_product_doc():
-    product_document = {
-        "name": input("Wpisz nazwe leku: "),
-        "price": input("Wpisz cene leku: ")
-    }
-    inserted_id = collection.insert_one(product_document).inserted_id
-    print(inserted_id)
-
-insert_product_doc()
-
-printer = pprint.PrettyPrinter()
-
-def print_products():
-    products = collection.find()
-
-    for product in products:
-        printer.pprint(product)
-
-print_products()
 
 # Napisac logike dla id(generowanie id na podstawie wymyslonego algorytmu albo z biblioteki). Get i set. jezeli id nowego obiektu jest reowne innemu(iteracja przez list), to wygeneruj inne id
 # Dane będą przetrzymywane w plikach tekstowych
@@ -85,6 +56,7 @@ class CustomerServices:
             print("4- Wroc do glownego menu")
 
             choice = input("Twoj wybor: ")
+            # Walidacja inputu
             print("\n")
 
             match choice:
@@ -101,14 +73,20 @@ class CustomerServices:
                 case _:
                     print("Nieprawidlowa wartosc")
 
-class ProductsServices:
+
+class ProductsInterface:
+    def __init__(self, repository):
+        self.repository = repository
+
     def products_menu(self):
+
         while True:
             print("\n1- Dodaj produkt do bazy danych")
             print("2- Wyswietl liste produktow")
             print("3- Edytuj produkt")
             print("4- Usun produkt z bazy danych")
-            print("5- Wroc do glwonego menu")
+            print("5- Znajdz konkretny lek")
+            print("6- Wroc do glwonego menu")
             
             choice = input("Twoj wybor: ")
             print("\n")
@@ -116,18 +94,105 @@ class ProductsServices:
             match choice:
                 case "1":
                     print("Dodaj")
+                    self.repository.insert_product_doc()
                 case "2":
-                    print("Wyswietl")
+                    print("Wyswietl wszystkie produkty")
+                    self.repository.print_products()
                 case "3":
                     print("Edytuj")
+                    name = input("Wpisz nazwe leku: ")
+                    self.repository.update_product_by_name(name)
                 case "4":
                     print("Usun")
+                    name = input("Wpisz nazwe leku: ")
+                    self.repository.delete_product_by_name(name)
                 case "5":
+                    print("Znajdz")
+                    name = input("Wpisz nazwe leku: ")
+                    self.repository.get_product_by_name(name)
+                case "6":
                     print("Laduje")
                     time.sleep(1)
                     break
                 case _:
                     print("Nieprawidlowa wartosc")
+
+
+
+class ProductsRepository:
+    def __init__(self, collection,printer):
+        self.collection = collection
+        self.printer = printer
+
+    def insert_product_doc(self):
+        product_name = input("Wpisz nazwe leku: ")
+        while True:
+            product_price = input("Wpisz cene leku: ")
+            try:
+                price = float(product_price)
+                if price < 0:
+                    raise ValueError("Cena nie może być ujemna!")
+                
+                product_document = {
+                    "name": product_name,
+                    "price": price
+                }
+                inserted_id = self.collection.insert_one(product_document).inserted_id
+                print("Produkt zostal dodany do bazy danych")
+                print(inserted_id)
+                break
+            except ValueError as e:
+                print("Blad: Wprowadz poprawna cene. Blad: ", e)
+            except Exception as e:
+                print("Wystąpil blad podczas dodawania produktu: ",e)
+            
+
+
+    def print_products(self):
+        try:
+            products = self.collection.find()
+
+            for product in products:
+                self.printer.pprint(product['name'])
+        except Exception as e:
+            print("Wystapil blad podczas pobierania produktow", e)
+
+    def get_product_by_name(self,name):
+        serached_product = self.collection.find_one({"name": name})
+        self.printer.pprint(serached_product)
+
+    def delete_product_by_name(self, name):
+        self.collection.delete_one({"name": name})
+
+    def update_product_by_name(self,name):
+        # all_updates = {
+        #     "$set": {"on_sotck": True},
+        # }
+        # collection.update_one({"name": name}, all_updates)
+        updated_product = {
+            "name": input("Nowa nazwa: "),
+            "price": input("Nowa cena: ")
+        }
+        self.collection.replace_one({"name": name}, updated_product)
+
+class ProductServices:
+    def __init__(self):
+        load_dotenv(find_dotenv())
+        password = os.environ.get("MONGODB_PWD")
+
+        connection_string = f"mongodb+srv://wojtekpawlik17:{password}@pharmacyproducts.7r8kbft.mongodb.net/?retryWrites=true&w=majority&appName=PharmacyProducts"
+
+        client = MongoClient(connection_string)
+        products_db = client.PharmacyProducts
+        collections = products_db.list_collection_names()
+        print(collections)
+        self.collection = products_db.Products
+
+        self.printer = pprint.PrettyPrinter()
+    
+    def products_menu(self):
+        interface = ProductsInterface(ProductsRepository(self.collection,self.printer))
+        interface.products_menu()
 
 class app: 
       
@@ -147,8 +212,8 @@ class app:
                     customer_service = CustomerServices()
                     customer_service.customer_menu()
                 case "2":
-                    print("\n-----Obsluga klientow-----")
-                    product_service = ProductsServices()
+                    print("\n-----Obsluga produktów-----")
+                    product_service = ProductServices()
                     product_service.products_menu()
                 case "3":
                     print("Do zobaczenia!")
