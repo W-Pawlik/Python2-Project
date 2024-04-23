@@ -5,8 +5,8 @@ from dotenv import load_dotenv, find_dotenv
 import pprint
 from pymongo import MongoClient
 from rich.console import Console
-
-
+from rich.theme import Theme
+from utility import loading
 
 # Napisac logike dla id(generowanie id na podstawie wymyslonego algorytmu albo z biblioteki). Get i set. jezeli id nowego obiektu jest reowne innemu(iteracja przez list), to wygeneruj inne id
 # Dane będą przetrzymywane w plikach tekstowych
@@ -46,15 +46,15 @@ class CustomerServices:
                 self.customer_list.remove(customer)
                 print("Klient zosatl usuniety")
             else:
-                print("Nie odnaleziono klienta w bazie danych")
+                console.print("Nie odnaleziono klienta w bazie danych", style="error")
 
 
     def customer_menu(self):
         while True:
-            print("\n1- Stworz nowy profil klienta")
-            print("2- Usun profil klienta")
-            print("3- Wyswietl liste klientow")
-            print("4- Wroc do glownego menu")
+            console.print("\n1- Stworz nowy profil klienta", style="main_theme")
+            console.print("2- Usun profil klienta",  style="main_theme")
+            console.print("3- Wyswietl liste klientow",  style="main_theme")
+            console.print("4- Wroc do glownego menu",  style="main_theme")
 
             choice = input("Twoj wybor: ")
             # Walidacja inputu
@@ -68,8 +68,7 @@ class CustomerServices:
                 case "3":
                     self.show_customer_list()
                 case "4":
-                        print("Laduje")
-                        time.sleep(1)
+                        loading()
                         break
                 case _:
                     print("Nieprawidlowa wartosc")
@@ -80,14 +79,14 @@ class ProductsInterface:
         self.repository = repository
 
     def products_menu(self):
-
+        
         while True:
-            print("\n1- Dodaj produkt do bazy danych")
-            print("2- Wyswietl liste produktow")
-            print("3- Edytuj produkt")
-            print("4- Usun produkt z bazy danych")
-            print("5- Znajdz konkretny lek")
-            print("6- Wroc do glwonego menu")
+            console.print("\n1- ➕ Dodaj produkt do bazy danych ➕", style="main_theme")
+            console.print("2- 📜 Wyswietl liste produktow 📜", style="main_theme")
+            console.print("3- ✍  Edytuj produkt ✍", style="main_theme")
+            console.print("4- ➖ Usun produkt z bazy danych ➖", style="main_theme")
+            console.print("5- 🔎 Znajdz konkretny lek 🔎", style="main_theme")
+            console.print("6- 🔙 Wroc do glwonego menu 🔙", style="main_theme")
             
             choice = input("Twoj wybor: ")
             print("\n")
@@ -112,8 +111,7 @@ class ProductsInterface:
                     name = input("Wpisz nazwe leku: ")
                     self.repository.get_product_by_name(name)
                 case "6":
-                    print("Laduje")
-                    time.sleep(1)
+                    loading()
                     break
                 case _:
                     print("Nieprawidlowa wartosc")
@@ -180,8 +178,9 @@ class ProductServices:
     def __init__(self):
         load_dotenv(find_dotenv())
         password = os.environ.get("MONGODB_PWD")
+        username = os.environ.get("MONGODB_USERNAME")
 
-        connection_string = f"mongodb+srv://wojtekpawlik17:{password}@pharmacyproducts.7r8kbft.mongodb.net/?retryWrites=true&w=majority&appName=PharmacyProducts"
+        connection_string = f"mongodb+srv://{username}:{password}@pharmacyproducts.7r8kbft.mongodb.net/?retryWrites=true&w=majority&appName=PharmacyProducts"
 
         client = MongoClient(connection_string)
         products_db = client.PharmacyProducts
@@ -196,23 +195,21 @@ class ProductServices:
 
 class App: 
     def __init__(self, console):
-        self.console = Console
+        self.console = console
 
     def start(self):
-        main_theme = "rgb(8,153,147)"
-        section_title = "bold yellow on black"
         while True:
             os.system('cls')
             console.print('-------Witaj w aplikacji------', style="bold black on yellow")
-            console.print('\nWybierz co chcesz zrobić:', style=section_title)
-            console.print('1-Obsluga klientow 🧑', style=main_theme)
-            console.print('2-Obsluga produktow :pill:',style=main_theme )
-            console.print('3-exit',style="red")
+            console.print('\nWybierz co chcesz zrobić:', style="section_title")
+            console.print('1-Obsluga klientow 🧑', style="main_theme")
+            console.print('2-Obsluga produktow :pill:',style="main_theme" )
+            console.print('3-exit 🔚',style="red")
 
             choice = input("Twój wybór: ")
             match choice:
                 case "1":
-                    console.print("\n👪👪👪 Obsluga klientow 👪👪👪", style=section_title)
+                    console.print("\n👪👪👪 Obsluga klientow 👪👪👪", style="section_title")
                     customer_service = CustomerServices()
                     customer_service.customer_menu()
                 case "2":
@@ -226,6 +223,7 @@ class App:
                     print("Nieprawidlowa wartosc")
 
 if __name__ == '__main__':
-    console = Console()
+    custom_theme = Theme({"main_theme": "rgb(8,153,147)", "section_title" : "bold yellow on black", "error": "bold red", "success": "bold green"})
+    console = Console(theme=custom_theme)
     app = App(console)
     app.start()
