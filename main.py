@@ -1,4 +1,3 @@
-import time
 import random
 import os
 from dotenv import load_dotenv, find_dotenv
@@ -7,6 +6,7 @@ from pymongo import MongoClient
 from rich.console import Console
 from rich.theme import Theme
 from utility import loading
+import uuid
 
 # Napisac logike dla id(generowanie id na podstawie wymyslonego algorytmu albo z biblioteki). Get i set. jezeli id nowego obiektu jest reowne innemu(iteracja przez list), to wygeneruj inne id
 # Dane będą przetrzymywane w plikach tekstowych
@@ -22,7 +22,7 @@ class Customer:
 
 
     def show_customer_details(self):
-        print(f"Client{self.id}: {self.first_name} {self.second_name}, {self.age} years old")
+        print(f"Client: {self.first_name} {self.second_name}, {self.age} years old.")
 
 class CustomerServices:
     customer_list = []
@@ -30,7 +30,7 @@ class CustomerServices:
         customer_first_name = input("Imie: ")
         customer_second_name = input("Nazwisko: ")
         customer_wiek = input("wiek: ")
-        customer_id = random.randint(1,100)
+        customer_id = str(uuid.uuid4())[0:15]
         new_customer = Customer(customer_first_name, customer_second_name, customer_wiek, customer_id)
         self.customer_list.append(new_customer)
     
@@ -51,10 +51,10 @@ class CustomerServices:
 
     def customer_menu(self):
         while True:
-            console.print("\n1- Stworz nowy profil klienta", style="main_theme")
-            console.print("2- Usun profil klienta",  style="main_theme")
-            console.print("3- Wyswietl liste klientow",  style="main_theme")
-            console.print("4- Wroc do glownego menu",  style="main_theme")
+            console.print("\n➕1- Stworz nowy profil klienta ➕", style="main_theme")
+            console.print("2- ➖ Usun profil klienta ➖",  style="main_theme")
+            console.print("3- 📜 Wyswietl liste klientow 📜",  style="main_theme")
+            console.print("4- 🔙 Wroc do glownego menu 🔙",  style="main_theme")
 
             choice = input("Twoj wybor: ")
             # Walidacja inputu
@@ -71,7 +71,7 @@ class CustomerServices:
                         loading()
                         break
                 case _:
-                    print("Nieprawidlowa wartosc")
+                    console.print("Nieprawidlowa wartosc! Wpisz liczbe z zakresu od 1 do 4", style="error")
 
 
 class ProductsInterface:
@@ -114,7 +114,7 @@ class ProductsInterface:
                     loading()
                     break
                 case _:
-                    print("Nieprawidlowa wartosc")
+                    console.print("Nieprawidlowa wartosc! Wpisz liczbe z zakresu od 1 do 6", style="error")
 
 
 
@@ -146,11 +146,12 @@ class ProductsRepository:
                 print("Wystąpil blad podczas dodawania produktu: ",e)
             
 
+    
 
     def print_products(self):
         try:
             products = self.collection.find()
-
+            
             for product in products:
                 self.printer.pprint(product['name'])
         except Exception as e:
@@ -199,7 +200,7 @@ class App:
 
     def start(self):
         while True:
-            os.system('cls')
+            
             console.print('-------Witaj w aplikacji------', style="bold black on yellow")
             console.print('\nWybierz co chcesz zrobić:', style="section_title")
             console.print('1-Obsluga klientow 🧑', style="main_theme")
@@ -220,10 +221,12 @@ class App:
                     console.print(":waving_hand: Do zobaczenia! :waving_hand:", style="bold")
                     break
                 case _:
-                    print("Nieprawidlowa wartosc")
+                    console.print("Nieprawidlowa wartosc! Wpisz liczbe z zakresu od 1 do 6", style="error")
+
 
 if __name__ == '__main__':
-    custom_theme = Theme({"main_theme": "rgb(8,153,147)", "section_title" : "bold yellow on black", "error": "bold red", "success": "bold green"})
+    os.system('cls')
+    custom_theme = Theme({"main_theme": "rgb(8,153,147)", "section_title" : "bold yellow on black", "error": "bold red underline", "success": "bold green"})
     console = Console(theme=custom_theme)
     app = App(console)
     app.start()
