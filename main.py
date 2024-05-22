@@ -86,7 +86,8 @@ class ProductsInterface:
             console.print("3- ✍  Edytuj produkt ✍", style="main_theme")
             console.print("4- ➖ Usun produkt z bazy danych ➖", style="main_theme")
             console.print("5- 🔎 Znajdz konkretny lek 🔎", style="main_theme")
-            console.print("6- 🔙 Wroc do glwonego menu 🔙", style="main_theme")
+            console.print("6-  📜 Wyswietl produkty danego typu 📜", style="main_theme")
+            console.print("7- 🔙 Wroc do glwonego menu 🔙", style="main_theme")
             
             choice = input("Twoj wybor: ")
             print("\n")
@@ -111,6 +112,10 @@ class ProductsInterface:
                     name = input("Wpisz nazwe leku: ")
                     self.repository.get_product_by_name(name)
                 case "6":
+                    print("Wyswietl produkty danego typu")
+                    medicine_type = input("Wpisz jakiego typu lekow szukasz: ")
+                    self.repository.print_product_of_specific_type(medicine_type)
+                case "7":
                     loading()
                     break
                 case _:
@@ -125,6 +130,7 @@ class ProductsRepository:
 
     def insert_product_doc(self):
         product_name = input("Wpisz nazwe leku: ")
+        medicine_type = input("Wpisz typ leku: ")
         while True:
             product_price = input("Wpisz cene leku: ")
             try:
@@ -134,7 +140,8 @@ class ProductsRepository:
                 
                 product_document = {
                     "name": product_name,
-                    "price": price
+                    "price": price,
+                    "medicine_type": medicine_type
                 }
                 inserted_id = self.collection.insert_one(product_document).inserted_id
                 print("Produkt zostal dodany do bazy danych")
@@ -146,14 +153,24 @@ class ProductsRepository:
                 print("Wystąpil blad podczas dodawania produktu: ",e)
             
 
-    
-
+    def print_product_of_specific_type(self,medicine_type):
+        print(f"Wyszukiwany typ leku: {medicine_type}")
+        searched_products = self.collection.find({"medicine_type": medicine_type})
+        for searched_product in searched_products:
+            self.printer.pprint(searched_product)
+            
     def print_products(self):
+        
+        def pprint_to_str(product, index):
+            return f"Product number {index+1}: {product['name']}"
         try:
             products = self.collection.find()
             
-            for product in products:
-                self.printer.pprint(product['name'])
+            product_strings = map(lambda item: pprint_to_str(item[1], item[0]), enumerate(products))
+
+            for product_str in product_strings:
+                self.printer.pprint(product_str)
+
         except Exception as e:
             print("Wystapil blad podczas pobierania produktow", e)
 
