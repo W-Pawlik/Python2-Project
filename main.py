@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.theme import Theme
 from utility import loading
 import uuid
+import json
 
 # Napisac logike dla id(generowanie id na podstawie wymyslonego algorytmu albo z biblioteki). Get i set. jezeli id nowego obiektu jest reowne innemu(iteracja przez list), to wygeneruj inne id
 # Dane będą przetrzymywane w plikach tekstowych
@@ -20,33 +21,117 @@ class Customer:
         self.age = age
         self.id = id
 
+    def data_to_dict(self):
+        return {
+            "first_name" : self.first_name,
+            "second_name" : self.second_name,
+            "age" : self.age,
+            "id" : self.id
+        }
 
-    def show_customer_details(self):
-        print(f"Client: {self.first_name} {self.second_name}, {self.age} years old.")
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data['first_name'], data['second_name'], data['age'], data['id'])
 
 class CustomerServices:
-    customer_list = []
+    
+    # Methods for file service
+    def save_customer_to_file(self,cus_database_file,customer):
+        customers = self.read_customers_from_file(cus_database_file)
+        customers.append(customer.data_to_dict())
+        file = open(cus_database_file, "w")
+        with open(cus_database_file, 'w') as file:
+            json.dump(customers, file, indent=4)
+    
+    def read_customers_from_file(self, cus_database_file):
+        if not os.path.exists(cus_database_file):
+            return []
+        try:
+            with open(cus_database_file, 'r') as file:
+                return json.load(file)
+        except (json.JSONDecodeError, FileNotFoundError):
+            return []
+            
+
     def create_customer(self):
+        cus_database_file = 'customers_database.json'
+        
         customer_first_name = input("Imie: ")
         customer_second_name = input("Nazwisko: ")
-        customer_wiek = input("wiek: ")
+        customer_age = input("wiek: ")
         customer_id = str(uuid.uuid4())[0:15]
-        new_customer = Customer(customer_first_name, customer_second_name, customer_wiek, customer_id)
-        self.customer_list.append(new_customer)
+        new_customer = Customer(customer_first_name, customer_second_name, customer_age, customer_id)
+        self.save_customer_to_file(cus_database_file,new_customer)
+        console.print("Dodano nowego klienta", style="success")
+        
     
     def show_customer_list(self):
-        for customer in self.customer_list:
-            customer.show_customer_details()
+        cus_database_file = 'customers_database.json'
+        customers_list = self.read_customers_from_file(cus_database_file)
+        if customers_list:
+            console.print("---LISTA KLIENTOW---")
+            for customer_data in customers_list:
+                customer = Customer.from_dict(customer_data)
+                print(f"Imię: {customer.first_name}, Nazwisko: {customer.second_name}, Wiek: {customer.age}")
+        else:
+            console.print("W bazie danych nie ma żadnych klientów", style="error")
+
+        
+        
 
     def delete_customer(self):
-        print("Wybierz kleinta ktorego chcesz usunac")
-        customer_name = input("Wpisz imie:")
-        for customer in self.customer_list:
-            if(customer.first_name == customer_name):
-                self.customer_list.remove(customer)
-                print("Klient zosatl usuniety")
-            else:
-                console.print("Nie odnaleziono klienta w bazie danych", style="error")
+        cus_database_file = 'customers_database.json'
+        customers_list = self.read_customers_from_file(cus_database_file)
+        print("Wybierz klienta, którego chcesz usunąć")
+        customer_first_name = input("Wpisz imię: ")
+        customer_second_name = input("Wpisz nazwisko: ")
+
+        updated_customers_list = [
+            customer for customer in customers_list
+            if not (customer['first_name'] == customer_first_name and customer['second_name'] == customer_second_name)
+        ]
+
+        with open(cus_database_file, 'w') as file:
+            json.dump(updated_customers_list, file, indent=4)
+        console.print(f"Usunięto klienta: {customer_first_name} {customer_second_name}", style="error")
+
+    def update_customer(self):
+        cus_database_file = 'customers_database.json'
+        customers_list = self.read_customers_from_file(cus_database_file)
+        print("Wybierz klienta, którego chcesz edytować")
+        customer_first_name = input("Wpisz imię: ")
+        customer_second_name = input("Wpisz nazwisko: ")
+
+        for customer in customers_list:
+            if customer['first_name'] == customer_first_name and customer['second_name'] == customer_second_name:
+                print(f"Znaleziono klienta: {customer_first_name} {customer_second_name}")
+                while True:
+                    print("Które dane chcesz zmienić?")
+                    print("1 - Imię")
+                    print("2 - Nazwisko")
+                    print("3 - Wiek")
+                    
+                    choice = input("Twój wybór: ")
+
+                    if choice == "1":
+                        customer['first_name'] = input("Wpisz nowe imię: ")
+                        break
+                    elif choice == "2":
+                        customer['second_name'] = input("Wpisz nowe nazwisko: ")
+                        break
+                    elif choice == "3":
+                        customer['age'] = input("Wpisz nowy wiek: ")
+                        break
+                    else:
+                        print("Nieprawidłowa wartość! Wpisz liczbę z zakresu od 1 do 3")
+
+                with open(cus_database_file, 'w') as file:
+                    json.dump(customers_list, file, indent=4)
+                console.print("Zaktualizowano dane klienta: ", customer['first_name'], customer['second_name'], style="success")
+                return
+
+        print(f"Nie znaleziono klienta: {customer_first_name} {customer_second_name}")
+
 
 
     def customer_menu(self):
@@ -54,7 +139,8 @@ class CustomerServices:
             console.print("\n➕1- Stworz nowy profil klienta ➕", style="main_theme")
             console.print("2- ➖ Usun profil klienta ➖",  style="main_theme")
             console.print("3- 📜 Wyswietl liste klientow 📜",  style="main_theme")
-            console.print("4- 🔙 Wroc do glownego menu 🔙",  style="main_theme")
+            console.print("4- 📝  Edytuj dane klienta 📝",  style="main_theme")
+            console.print("5- 🔙 Wroc do glownego menu 🔙",  style="main_theme")
 
             choice = input("Twoj wybor: ")
             # Walidacja inputu
@@ -68,6 +154,8 @@ class CustomerServices:
                 case "3":
                     self.show_customer_list()
                 case "4":
+                    self.update_customer()
+                case "5":
                         loading()
                         break
                 case _:
