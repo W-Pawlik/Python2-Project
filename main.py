@@ -155,14 +155,18 @@ class ProductsRepository:
 
     def print_product_of_specific_type(self,medicine_type):
         print(f"Wyszukiwany typ leku: {medicine_type}")
-        searched_products = self.collection.find({"medicine_type": medicine_type})
-        for searched_product in searched_products:
-            self.printer.pprint(searched_product)
+        searched_products = self.collection.find({"medicine_type": medicine_type}).sort({ "price": 1})
+        for i, searched_product in enumerate(searched_products, start=1):
+            index = i
+            product_name = searched_product['name']
+            product_price = searched_product['price']
+            print(f"Produkt {index}: {product_name} {product_price}")
             
+    
     def print_products(self):
         
         def pprint_to_str(product, index):
-            return f"Product number {index+1}: {product['name']}"
+            return f"Product number {index+1}: {product['name']} cena: {product['price']}"
         try:
             products = self.collection.find()
             
