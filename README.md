@@ -9,9 +9,9 @@ A **Python-based desktop application** designed to manage customers and products
 <p align="left">
  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/1869px-Python-logo-notext.svg.png" alt="Python" width="40" height="40"/>
   
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Rich_%28Python_library%29_logo.svg/2560px-Rich_%28Python_library%29_logo.svg.png" alt="rich" width="40" height="40"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Rich_%28Python_library%29_logo.svg/2560px-Rich_%28Python_library%29_logo.svg.png" alt="rich" width="40" height="60"/>
   
-<img src="https://upload.wikimedia.org/wikipedia/commons/0/00/Mongodb.png" alt="mongoDB" width="40" height="40"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/0/00/Mongodb.png" alt="mongoDB" width="60" height="40"/>
 </p>
 
 ---
